@@ -23,12 +23,8 @@
 #ifndef DIALOGBOX_H_
 #define DIALOGBOX_H_
 
-#include <QtGlobal>
-#if QT_VERSION >= 0x050000
-    #include <QtWidgets>
-#else
-    #include <QtGui>
-#endif
+#include <QtWidgets>
+#include <QMetaType>
 
 #define DEFAULT_ALIGNMENT Qt::Alignment(0)
 #define GRAPHICS_ALIGNMENT Qt::AlignCenter
@@ -65,7 +61,7 @@ namespace DialogCommandTokens
         OptionEnabled =    SetCommand | UnsetCommand | 0x00000001,
         OptionFocus =      SetCommand | 0x00000002,
         OptionStyleSheet = SetCommand | UnsetCommand | 0x00000004,
-        OptionVisible =    SetCommand | UnsetCommand | 0x00000008,
+        OptionVisible =    SetCommand | 0x00000008,
 
         // Options specific for some commands (say, sub-commands)
         OptionVertical =   StepCommand | 0x00000001,
@@ -184,6 +180,8 @@ struct DialogCommand
     unsigned int command;
     unsigned int control;
 };
+
+Q_DECLARE_METATYPE(DialogCommand)
 
 class DialogBox : public QDialog
 {
