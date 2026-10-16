@@ -28,13 +28,13 @@ using namespace DialogCommandTokens;
  *
  *  PRIVATE FUNCTIONS
  *
- ******************************************************************************/
+ *******************************************************************************/
 
 /*******************************************************************************
  *  updateTabsOrder sets widgets focus order in way they are shown on the
  *  dialog, not they are created.
  *  It walks through the given or current (the currentLayout is on) page only.
- ******************************************************************************/
+ *******************************************************************************/
 void DialogBox::updateTabsOrder(QWidget *page)
 {
     QBoxLayout *mainLayout = (QBoxLayout *)(page ? page->layout() :
@@ -93,7 +93,7 @@ void DialogBox::updateTabsOrder(QWidget *page)
 /*******************************************************************************
  *  The layout is empty if it is not the current one, has no child widgets and
  *  the same is true for all its downlinks.
- ******************************************************************************/
+ *******************************************************************************/
 bool DialogBox::isEmpty(QLayout *layout)
 {
     // Note:
@@ -120,7 +120,7 @@ bool DialogBox::isEmpty(QLayout *layout)
  *    - is not installed on a widget (groupbox in particular)
  *    - is not the current one
  *    - is not the last one
- ******************************************************************************/
+ *******************************************************************************/
 bool DialogBox::removeIfEmpty(QLayout *layout)
 {
     QLayout *parent;
@@ -142,7 +142,7 @@ bool DialogBox::removeIfEmpty(QLayout *layout)
  *  sanitizeLayout prevents fantom layouts. Must be called for end layouts ONLY
  *  (3rd or 4th level). Actually for the 4th level layout it removes spacer
  *  items only.
- ******************************************************************************/
+ *******************************************************************************/
 void DialogBox::sanitizeLayout(QLayout *layout)
 {
     if (isEmpty(layout) && layout->count()) {
@@ -156,7 +156,7 @@ void DialogBox::sanitizeLayout(QLayout *layout)
 
 /*******************************************************************************
  *  sanitizeLabel prepares label for changing its content type
- ******************************************************************************/
+ *******************************************************************************/
 void DialogBox::sanitizeLabel(QWidget *label, enum ContentType content)
 {
     if (widgetType(label) == LabelWidget) {
@@ -230,9 +230,10 @@ void DialogBox::printWidgetsRecursively(QLayoutItem *item)
 void DialogBox::printWidget(QWidget *widget)
 {
     if (widget->isEnabled()) {
-        // const char *name = widget->objectName().toLocal8Bit().constData();
-        const QByteArray _widgetName = widget->objectName().toLocal8Bit();
-        const char *name = _widgetName.constData();
+        // OLD: const char *name = widget->objectName().toLocal8Bit().constData();
+        // Preserve the temporary QByteArray to make constData() pointer valid.
+        const QByteArray _nameBa = widget->objectName().toLocal8Bit();
+        const char *name = _nameBa.constData();
 
         if (name[0]) {
             QWidget *proxyWidget;
@@ -262,29 +263,29 @@ void DialogBox::printWidget(QWidget *widget)
                 fprintf(output, "%s=", name);
                 switch ((unsigned)widgetType(proxyWidget)) {
                 case ComboBoxWidget: {
-                    // fprintf(output, "%s\n",
-                    //         ((QComboBox *)proxyWidget)->currentText()
-                    //         .toLocal8Bit().constData());
-                    const QString _comboText = ((QComboBox *)proxyWidget)->currentText();
-                    const QByteArray _comboTextBa = _comboText.toLocal8Bit();
-                    fprintf(output, "%s\n", _comboTextBa.constData());
+                    // OLD: ((QComboBox *)proxyWidget)->currentText().toLocal8Bit().constData()
+                    QString _tmp = ((QComboBox *)proxyWidget)->currentText();
+                    const QByteArray _tmpBa = _tmp.toLocal8Bit();
+                    fprintf(output, "%s\n", _tmpBa.constData());
                     break;
                 }
-                case ListBoxWidget: {
+                case ListBoxWidget:
                     item = ((QListWidget *)proxyWidget)->currentItem();
-                    // fprintf(output, "%s\n",
-                    //         item ? item->text().toLocal8Bit().constData() : "");
-                    const QString _listText = item ? item->text() : QString();
-                    const QByteArray _listTextBa = _listText.toLocal8Bit();
-                    fprintf(output, "%s\n", _listTextBa.constData());
+                    if (item) {
+                        // OLD: item->text().toLocal8Bit().constData()
+                        QString _txt = item->text();
+                        const QByteArray _txtBa = _txt.toLocal8Bit();
+                        fprintf(output, "%s\n", _txtBa.constData());
+                    } else {
+                        fprintf(output, "\n");
+                    }
                     break;
-                }
                 default: {
                     metaObj = proxyWidget->metaObject();
-                    const QString _proxyText = metaObj->property(metaObj->indexOfProperty("text"))
-                            .read(proxyWidget).toString();
-                    const QByteArray _proxyTextBa = _proxyText.toLocal8Bit();
-                    fprintf(output, "%s\n", _proxyTextBa.constData());
+                    // OLD: metaObj->property(metaObj->indexOfProperty("text")).read(proxyWidget).toString().toLocal8Bit().constData()
+                    QString _txt = metaObj->property(metaObj->indexOfProperty("text")).read(proxyWidget).toString();
+                    const QByteArray _txtBa = _txt.toLocal8Bit();
+                    fprintf(output, "%s\n", _txtBa.constData());
                     break;
                 }
                 }
