@@ -34,12 +34,21 @@ DialogParser::DialogParser(DialogBox *parent, FILE *in) :
     stage = StageCommand;
     token = bufferIndex = 0;
 
-    qRegisterMetaType<DialogCommand>("DialogCommand");
+    // qRegisterMetaType<DialogCommand>("DialogCommand");
+    // Use parameterless registration (DialogCommand declared with Q_DECLARE_METATYPE)
+    qRegisterMetaType<DialogCommand>();
+
     // Qt::BlockingQueuedConnection type is used to ensure commands are executed
     // sequentially. This avoids races e.g. show hide show sequence in v1.0.
     if (parent) {
-        connect(this, SIGNAL(sendCommand(DialogCommand)), parent,
-                SLOT(executeCommand(DialogCommand)),
+        // Old-style connect (commented out):
+        // connect(this, SIGNAL(sendCommand(DialogCommand)), parent,
+        //         SLOT(executeCommand(DialogCommand)),
+        //         Qt::BlockingQueuedConnection);
+
+        // Function-pointer connect for Qt6 compatibility and type safety
+        connect(this, &DialogParser::sendCommand,
+                parent, &DialogBox::executeCommand,
                 Qt::BlockingQueuedConnection);
     }
 }
@@ -48,22 +57,35 @@ DialogParser::~DialogParser()
 {
     // We cannot gracefully terminate this thread as input from stdin may be
     // blocking when attached to a terminal.
-    terminate();
+    // terminate();
+    // wait();
+
+    // Prefer cooperative interruption over terminate().
+    requestInterruption();
     wait();
 }
 
 void DialogParser::setParent(DialogBox *parent)
 {
     if (dialog) {
-        disconnect(this, SIGNAL(sendCommand(DialogCommand)),
-                   dialog, SLOT(executeCommand(DialogCommand)));
+        // Old-style disconnect (commented out):
+        // disconnect(this, SIGNAL(sendCommand(DialogCommand)),
+        //            dialog, SLOT(executeCommand(DialogCommand)));
+
+        // Function-pointer disconnect
+        disconnect(this, &DialogParser::sendCommand, dialog, &DialogBox::executeCommand);
     }
 
     dialog = parent;
     QObject::setParent(parent);
     if (parent) {
-        connect(this, SIGNAL(sendCommand(DialogCommand)), parent,
-                SLOT(executeCommand(DialogCommand)),
+        // Old-style connect (commented out):
+        // connect(this, SIGNAL(sendCommand(DialogCommand)), parent,
+        //         SLOT(executeCommand(DialogCommand)),
+        //         Qt::BlockingQueuedConnection);
+
+        connect(this, &DialogParser::sendCommand,
+                parent, &DialogBox::executeCommand,
                 Qt::BlockingQueuedConnection);
     }
 }
@@ -75,8 +97,10 @@ void DialogParser::run()
     bool endOfLine;
     int c;
 
-    // This thread will be ended up by terminate() call from the destructor.
-    while (true) {
+    // This thread used to be terminated with terminate(); replace with
+    // cooperative interruption check. Note: reading from stdin may still block.
+    // while (true) {
+    while (!isInterruptionRequested()) {
         quoted = backslash = endOfLine = false;
         do {
             if (bufferIndex != token)

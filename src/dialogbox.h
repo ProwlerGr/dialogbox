@@ -30,6 +30,38 @@
     #include <QtGui>
 #endif
 
+// NOTE: Replaced umbrella module includes with explicit Qt headers for Qt6
+// compatibility. Original include block (above) is kept for reference.
+// #if QT_VERSION >= 0x050000
+//     #include <QtWidgets>
+// #else
+//     #include <QtGui>
+// #endif
+
+#include <QDialog>
+#include <QWidget>
+#include <QLayout>
+#include <QBoxLayout>
+#include <QPushButton>
+#include <QCheckBox>
+#include <QRadioButton>
+#include <QLabel>
+#include <QLineEdit>
+#include <QTextEdit>
+#include <QComboBox>
+#include <QListWidget>
+#include <QListWidgetItem>
+#include <QMovie>
+#include <QPixmap>
+#include <QFrame>
+#include <QGroupBox>
+#include <QProgressBar>
+#include <QSlider>
+#include <QThread>
+#include <QVariant>
+#include <QMetaType>
+#include <QModelIndex>
+
 #define DEFAULT_ALIGNMENT Qt::Alignment(0)
 #define GRAPHICS_ALIGNMENT Qt::AlignCenter
 #define TEXT_ALIGNMENT Qt::AlignTop | Qt::AlignLeft
@@ -140,7 +172,7 @@ namespace DialogCommandTokens
         PropertyMinimum = ProgressBarWidget | SliderWidget | 0x00000001,
         PropertyMaximum = ProgressBarWidget | SliderWidget | 0x00000002,
         PropertyValue = ProgressBarWidget | SliderWidget | 0x00000004,
-        PropertyBusy = ProgressBarWidget | 0x00000008,
+        PropertyBusy = ProgressBarWidget | SliderWidget | 0x00000008,
         PropertyFile = TextViewWidget | 0x00000004,
         PropertyPositionTop = TabsWidget | 0x00000001,
         PropertyPositionBottom = TabsWidget | 0x00000002,
@@ -184,6 +216,10 @@ struct DialogCommand
     unsigned int command;
     unsigned int control;
 };
+
+// Make DialogCommand a Qt metatype so it can be used in queued/blocked
+// signal/slot connections (Qt6 requires registration of custom types).
+Q_DECLARE_METATYPE(DialogCommand)
 
 class DialogBox : public QDialog
 {
