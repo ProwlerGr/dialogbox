@@ -61,8 +61,14 @@ void DialogBox::report()
  ******************************************************************************/
 void DialogBox::pushButtonClicked()
 {
-    QPushButton *pb = (QPushButton *)sender();
-    const char *objectName = pb->objectName().toLocal8Bit().constData();
+    // QPushButton *pb = (QPushButton *)sender();
+    QPushButton *pb = qobject_cast<QPushButton *>(sender()); // safer cast
+    if (!pb)
+        return;
+
+    // const char *objectName = pb->objectName().toLocal8Bit().constData();
+    const QByteArray _pbName = pb->objectName().toLocal8Bit();
+    const char *objectName = _pbName.constData();
 
     if (objectName[0] && !pb->isCheckable()) {
         fprintf(output, "%s=clicked\n", objectName);
@@ -76,7 +82,10 @@ void DialogBox::pushButtonClicked()
  ******************************************************************************/
 void DialogBox::pushButtonToggled(bool checked)
 {
-    const char *objectName = sender()->objectName().toLocal8Bit().constData();
+    // const char *objectName = sender()->objectName().toLocal8Bit().constData();
+    QObject *s = sender();
+    const QByteArray _sName = s ? s->objectName().toLocal8Bit() : QByteArray();
+    const char *objectName = _sName.constData();
 
     if (objectName[0]) {
         fprintf(output, "%s=%s\n", objectName,
@@ -90,17 +99,22 @@ void DialogBox::pushButtonToggled(bool checked)
  ******************************************************************************/
 void DialogBox::listBoxItemActivated(const QModelIndex &index)
 {
-    ListBox *list = (ListBox *)sender();
+    // ListBox *list = (ListBox *)sender();
+    ListBox *list = qobject_cast<ListBox *>(sender());
     QLayout *layout;
     QWidget *label;
 
     if ((layout = findLayout(list)) && (label = layout->itemAt(0)->widget())) {
-        const char *objectName = label->objectName().toLocal8Bit().constData();
+        // const char *objectName = label->objectName().toLocal8Bit().constData();
+        const QByteArray _labelName = label->objectName().toLocal8Bit();
+        const char *objectName = _labelName.constData();
 
         if (objectName[0]) {
             fprintf(output, "%s=", objectName);
-            fprintf(output, "%s\n",
-                    index.data().toString().toLocal8Bit().constData());
+            // const char *s = index.data().toString().toLocal8Bit().constData();
+            QString _tmp = index.data().toString();
+            const QByteArray _tmpBa = _tmp.toLocal8Bit();
+            fprintf(output, "%s\n", _tmpBa.constData());
             fflush(output);
         }
     }
@@ -111,17 +125,22 @@ void DialogBox::listBoxItemActivated(const QModelIndex &index)
  ******************************************************************************/
 void DialogBox::listBoxItemSelected(QListWidgetItem *current)
 {
-    ListBox *list = (ListBox *)sender();
+    // ListBox *list = (ListBox *)sender();
+    ListBox *list = qobject_cast<ListBox *>(sender());
     QLayout *layout;
     QWidget *label;
 
     if ((layout = findLayout(list)) && (label = layout->itemAt(0)->widget())) {
-        const char *objectName = label->objectName().toLocal8Bit().constData();
+        // const char *objectName = label->objectName().toLocal8Bit().constData();
+        const QByteArray _labelName = label->objectName().toLocal8Bit();
+        const char *objectName = _labelName.constData();
 
         if (objectName[0]) {
             fprintf(output, "%s=", objectName);
-            fprintf(output, "%s\n",
-                    current ? current->text().toLocal8Bit().constData() : "");
+            // fprintf(output, "%s\n", current ? current->text().toLocal8Bit().constData() : "");
+            QString _txt = current ? current->text() : QString();
+            const QByteArray _txtBa = _txt.toLocal8Bit();
+            fprintf(output, "%s\n", _txtBa.constData());
             fflush(output);
         }
     }
@@ -132,17 +151,22 @@ void DialogBox::listBoxItemSelected(QListWidgetItem *current)
  ******************************************************************************/
 void DialogBox::comboBoxItemSelected(int index)
 {
-    QComboBox *list = (QComboBox *)sender();
+    // QComboBox *list = (QComboBox *)sender();
+    QComboBox *list = qobject_cast<QComboBox *>(sender());
     QLayout *layout;
     QWidget *label;
 
     if ((layout = findLayout(list)) && (label = layout->itemAt(0)->widget())) {
-        const char *objectName = label->objectName().toLocal8Bit().constData();
+        // const char *objectName = label->objectName().toLocal8Bit().constData();
+        const QByteArray _labelName = label->objectName().toLocal8Bit();
+        const char *objectName = _labelName.constData();
 
         if (objectName[0]) {
             fprintf(output, "%s=", objectName);
-            fprintf(output, "%s\n",
-                    list->itemText(index).toLocal8Bit().constData());
+            // fprintf(output, "%s\n", list->itemText(index).toLocal8Bit().constData());
+            QString _txt = list ? list->itemText(index) : QString();
+            const QByteArray _txtBa = _txt.toLocal8Bit();
+            fprintf(output, "%s\n", _txtBa.constData());
             fflush(output);
         }
     }
@@ -153,7 +177,10 @@ void DialogBox::comboBoxItemSelected(int index)
  ******************************************************************************/
 void DialogBox::sliderValueChanged(int value)
 {
-    const char *objectName = sender()->objectName().toLocal8Bit().constData();
+    // const char *objectName = sender()->objectName().toLocal8Bit().constData();
+    QObject *s = sender();
+    const QByteArray _sName = s ? s->objectName().toLocal8Bit() : QByteArray();
+    const char *objectName = _sName.constData();
 
     if (objectName[0]) {
         fprintf(output, "%s=%d\n", objectName, value);
@@ -166,7 +193,9 @@ void DialogBox::sliderValueChanged(int value)
  ******************************************************************************/
 void DialogBox::sliderRangeChanged(int min, int max)
 {
-    QSlider *slider = (QSlider *)sender();
+    QSlider *slider = qobject_cast<QSlider *>(sender());
+    if (!slider)
+        return;
     int ps;
     int ss;
 
