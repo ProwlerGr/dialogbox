@@ -48,11 +48,14 @@ DialogParser::~DialogParser()
 {
     // We cannot gracefully terminate this thread as input from stdin may be
     // blocking when attached to a terminal.
-    requestInterruption();
-    wait(500);
     if (isRunning()) {
-        terminate();
-        wait();
+        requestInterruption();
+        quit();
+        wait(500);
+        if (isRunning()) {
+            terminate();
+            wait();
+        }
     }
 }
 
@@ -79,14 +82,17 @@ void DialogParser::run()
     bool endOfLine;
     int c;
 
-    // This thread will be ended up by terminate() call from the destructor.
-    while (true) {
+    // This thread will be ended up by requestInterruption() call from the
+    // destructor.
+    while (!isInterruptionRequested()) {
         quoted = backslash = endOfLine = false;
         do {
             if (bufferIndex != token)
                 token = ++bufferIndex;
 
             while ((c = fgetc(input)) != EOF) {
+                if (isInterruptionRequested())
+                    return;
                 if (isspace(c) && !quoted) {
                     if (isblank(c)) {
                         if (bufferIndex == token)
@@ -132,7 +138,9 @@ void DialogParser::run()
                 issueCommand();
                 endOfLine = false;
             }
-        } while (c != EOF);
+        } while (c != EOF && !isInterruptionRequested());
+        if (isInterruptionRequested())
+            break;
         issueCommand();
         // Sleep for a while to reduce the CPU time consumption.
         msleep(50);
