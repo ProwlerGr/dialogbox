@@ -48,8 +48,12 @@ DialogParser::~DialogParser()
 {
     // We cannot gracefully terminate this thread as input from stdin may be
     // blocking when attached to a terminal.
-    terminate();
-    wait();
+    requestInterruption();
+    wait(500);
+    if (isRunning()) {
+        terminate();
+        wait();
+    }
 }
 
 void DialogParser::setParent(DialogBox *parent)
