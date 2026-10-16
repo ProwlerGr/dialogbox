@@ -230,7 +230,9 @@ void DialogBox::printWidgetsRecursively(QLayoutItem *item)
 void DialogBox::printWidget(QWidget *widget)
 {
     if (widget->isEnabled()) {
-        const char *name = widget->objectName().toLocal8Bit().constData();
+        // const char *name = widget->objectName().toLocal8Bit().constData();
+        const QByteArray _widgetName = widget->objectName().toLocal8Bit();
+        const char *name = _widgetName.constData();
 
         if (name[0]) {
             QWidget *proxyWidget;
@@ -259,23 +261,32 @@ void DialogBox::printWidget(QWidget *widget)
 
                 fprintf(output, "%s=", name);
                 switch ((unsigned)widgetType(proxyWidget)) {
-                case ComboBoxWidget:
-                    fprintf(output, "%s\n",
-                            ((QComboBox *)proxyWidget)->currentText()
-                            .toLocal8Bit().constData());
+                case ComboBoxWidget: {
+                    // fprintf(output, "%s\n",
+                    //         ((QComboBox *)proxyWidget)->currentText()
+                    //         .toLocal8Bit().constData());
+                    const QString _comboText = ((QComboBox *)proxyWidget)->currentText();
+                    const QByteArray _comboTextBa = _comboText.toLocal8Bit();
+                    fprintf(output, "%s\n", _comboTextBa.constData());
                     break;
-                case ListBoxWidget:
+                }
+                case ListBoxWidget: {
                     item = ((QListWidget *)proxyWidget)->currentItem();
-                    fprintf(output, "%s\n",
-                            item ? item->text().toLocal8Bit().constData() : "");
+                    // fprintf(output, "%s\n",
+                    //         item ? item->text().toLocal8Bit().constData() : "");
+                    const QString _listText = item ? item->text() : QString();
+                    const QByteArray _listTextBa = _listText.toLocal8Bit();
+                    fprintf(output, "%s\n", _listTextBa.constData());
                     break;
-                default:
+                }
+                default: {
                     metaObj = proxyWidget->metaObject();
-                    fprintf(output, "%s\n",
-                            metaObj->property(metaObj->indexOfProperty("text"))
-                            .read(proxyWidget).toString().toLocal8Bit()
-                            .constData());
+                    const QString _proxyText = metaObj->property(metaObj->indexOfProperty("text"))
+                            .read(proxyWidget).toString();
+                    const QByteArray _proxyTextBa = _proxyText.toLocal8Bit();
+                    fprintf(output, "%s\n", _proxyTextBa.constData());
                     break;
+                }
                 }
                 fflush(output);
                 return;
