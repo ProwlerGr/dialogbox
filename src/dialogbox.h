@@ -43,6 +43,8 @@ namespace DialogCommandTokens
     // These enumerations are used as flags as well as masks thus we can't apply
     // QFlags template to them.
 
+    /*
+    // Original enum (left here commented out instead of removed):
     enum Command {
         // Commands
         NoopCommand =     0x00000000,
@@ -74,7 +76,44 @@ namespace DialogCommandTokens
         OptionSpace =      AddCommand | 0x00000001,
         OptionStretch =    AddCommand | 0x00000002
     };
+    */
 
+    // Use an explicitly unsigned underlying type so large bitflags (eg 0x80000000)
+    // are well-defined and do not provoke signed overflow or compiler warnings.
+    enum Command : unsigned int {
+        // Commands
+        NoopCommand =     0x00000000u,
+        AddCommand =      0x00000100u,
+        EndCommand =      0x00000200u,
+        StepCommand =     0x00000400u,
+        SetCommand =      0x00000800u,
+        UnsetCommand =    0x00001000u,
+        RemoveCommand =   0x00002000u,
+        ClearCommand =    0x00004000u,
+        PositionCommand = 0x00008000u,
+        QueryCommand =    0x00010000u,
+        PrintCommand =    0x80000000u,
+
+        // Masks
+        OptionMask =  0x0000000Fu,  // Property bits (4 properties max.)
+        CommandMask = 0xFFFFFFF0u,  // Command bits (28 commands max.)
+
+        // Options available for widgets of any type
+        OptionEnabled =    SetCommand | UnsetCommand | 0x00000001u,
+        OptionFocus =      SetCommand | 0x00000002u,
+        OptionStyleSheet = SetCommand | UnsetCommand | 0x00000004u,
+        OptionVisible =    SetCommand | UnsetCommand | 0x00000008u,
+
+        // Options specific for some commands (say, sub-commands)
+        OptionVertical =   StepCommand | 0x00000001u,
+        OptionBehind =     PositionCommand | 0x00000001u,
+        OptionOnto =       PositionCommand | 0x00000002u,
+        OptionSpace =      AddCommand | 0x00000001u,
+        OptionStretch =    AddCommand | 0x00000002u
+    };
+
+    /*
+    // Original enum (left here commented out instead of removed):
     enum Control {
         NoneWidget =        0x00000000,
 
@@ -147,6 +186,80 @@ namespace DialogCommandTokens
         PropertyPositionLeft = TabsWidget | 0x00000004,
         PropertyPositionRight = TabsWidget | 0x00000008,
     };
+    */
+
+    enum Control : unsigned int {
+        NoneWidget =        0x00000000u,
+
+        // Widgets
+        DialogWidget =      0x80000000u,  // Main window
+        FrameWidget =       0x40000000u,
+        SeparatorWidget =   0x20000000u,
+        LabelWidget =       0x10000000u,
+        GroupBoxWidget =    0x08000000u,
+        PushButtonWidget =  0x04000000u,
+        RadioButtonWidget = 0x02000000u,
+        CheckBoxWidget =    0x01000000u,
+        TextBoxWidget =     0x00800000u,
+        ListBoxWidget =     0x00400000u,
+        ComboBoxWidget =    0x00200000u,
+        ItemWidget =        0x00100000u,
+        ProgressBarWidget = 0x00080000u,
+        SliderWidget =      0x00040000u,
+        TextViewWidget =    0x00020000u,
+        TabsWidget =        0x00010000u,
+        PageWidget =        0x00008000u,
+
+        // Masks
+        PropertyMask = 0x000001FFu,  // Property bits (9 properties max.)
+        WidgetMask = 0xFFFFFE00u,    // All widgets listed above (23 types max.)
+        CaptionWidgetsMask = WidgetMask ^ FrameWidget ^ SeparatorWidget
+                             ^ ProgressBarWidget ^ SliderWidget ^ TextViewWidget
+                             ^ TabsWidget,
+
+        // Properties specific for particular widget types
+        PropertyTitle = CaptionWidgetsMask | 0x00000001u,
+        PropertyText = CaptionWidgetsMask | 0x00000002u,
+        PropertyIcon = DialogWidget | ItemWidget | PageWidget | PushButtonWidget
+                       | RadioButtonWidget | CheckBoxWidget | 0x00000004u,
+        PropertyChecked = GroupBoxWidget | PushButtonWidget | RadioButtonWidget
+                          | CheckBoxWidget | 0x00000008u,
+        PropertyCheckable = GroupBoxWidget | PushButtonWidget
+                            | RadioButtonWidget | CheckBoxWidget | 0x00000010u,
+        PropertyIconSize = TabsWidget | ListBoxWidget | ComboBoxWidget
+                           | PushButtonWidget | RadioButtonWidget
+                           | CheckBoxWidget | 0x00000020u,
+        PropertyVertical = GroupBoxWidget | FrameWidget | SeparatorWidget
+                           | ProgressBarWidget | SliderWidget | 0x00000080u,
+        PropertyApply = PushButtonWidget | 0x00000040u,
+        PropertyExit = PushButtonWidget | 0x00000080u,
+        // Note: pushbutton properties exceed 8 bits
+        PropertyDefault = PushButtonWidget | 0x00000100u,
+        PropertyPassword = TextBoxWidget | 0x00000004u,
+        PropertyPlaceholder = TextBoxWidget | 0x00000008u,
+        PropertyPicture = LabelWidget | 0x00000004u,
+        PropertyAnimation = LabelWidget | 0x00000008u,
+        PropertyPlain = FrameWidget | SeparatorWidget | 0x00000010u,
+        PropertyRaised = FrameWidget | SeparatorWidget | 0x00000020u,
+        PropertySunken = FrameWidget | SeparatorWidget | 0x00000040u,
+        PropertyNoframe = FrameWidget | 0x00000001u,
+        PropertyBox = FrameWidget | 0x00000002u,
+        PropertyPanel = FrameWidget | 0x00000004u,
+        PropertyStyled = FrameWidget | 0x00000008u,
+        PropertyCurrent = ItemWidget | PageWidget | 0x00000008u,
+        PropertyEditable = ComboBoxWidget | 0x00000004u,
+        PropertySelection = ComboBoxWidget | ListBoxWidget | 0x00000008u,
+        PropertyActivation = ListBoxWidget | 0x00000004u,
+        PropertyMinimum = ProgressBarWidget | SliderWidget | 0x00000001u,
+        PropertyMaximum = ProgressBarWidget | SliderWidget | 0x00000002u,
+        PropertyValue = ProgressBarWidget | SliderWidget | 0x00000004u,
+        PropertyBusy = ProgressBarWidget | 0x00000008u,
+        PropertyFile = TextViewWidget | 0x00000004u,
+        PropertyPositionTop = TabsWidget | 0x00000001u,
+        PropertyPositionBottom = TabsWidget | 0x00000002u,
+        PropertyPositionLeft = TabsWidget | 0x00000004u,
+        PropertyPositionRight = TabsWidget | 0x00000008u,
+    };
 
 }
 
@@ -184,6 +297,13 @@ struct DialogCommand
     unsigned int command;
     unsigned int control;
 };
+
+// Register DialogCommand as a Qt metatype so it can be safely used with queued
+// signal/slot connections (e.g., crossing threads). Keep the macro in the
+// header; call qRegisterMetaType<DialogCommand>("DialogCommand") early in
+// your application (main or DialogParser constructor) before emitting the
+// signal if you expect queued delivery.
+Q_DECLARE_METATYPE(DialogCommand)
 
 class DialogBox : public QDialog
 {
@@ -293,7 +413,12 @@ public:
 public slots:
     void executeCommand(DialogCommand);
     void report();
+    /*
+    // Original declaration kept commented out in case you want to revert.
     void done(int);
+    */
+    // Use override to make intent explicit; this overrides QDialog::done(int).
+    void done(int) override;
 
 private slots:
     void pushButtonClicked();
@@ -359,7 +484,11 @@ signals:
     void sendCommand(DialogCommand);
 
 protected:
+    /*
+    // Original virtual keyword kept commented out; replaced by explicit override
     virtual void run();
+    */
+    void run() override;
 
 private:
     enum Stage {
